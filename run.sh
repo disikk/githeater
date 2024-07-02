@@ -129,7 +129,7 @@ if ! grep -q "alias ${SERVICE_NAME}_stop" $BASH_PROFILE; then
     echo "alias ${SERVICE_NAME}_stop='sudo systemctl stop ${SERVICE_NAME}'" >> $BASH_PROFILE
 fi
 if ! grep -q "alias ${SERVICE_NAME}_update" $BASH_PROFILE; then
-    echo "alias ${SERVICE_NAME}_update='cd ${PROJECT_DIR}' && git pull && npm install'" >> $BASH_PROFILE
+    echo "alias ${SERVICE_NAME}_update='cd ${PROJECT_DIR} && git pull && npm install'" >> $BASH_PROFILE
 fi
 # Перезагрузка bash_PROFILE, чтобы алиасы стали доступны
 source $BASH_PROFILE
