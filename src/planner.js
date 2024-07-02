@@ -54,9 +54,44 @@ class Planner {
         }
     }
 
+    async chooseRepository(octokit, account) {
+        const repos = await this.tasks.githubManager.listReposWithRetry(octokit);
+        const repoCount = repos.length;
+        const threshold = config.REPOS_THRESHOLD;
+    
+        if (repoCount < threshold) {
+            const totalProbability = repoCount + 1;
+            const random = Math.random() * totalProbability;
+            
+            if (random < 1) {
+                return 'NEW_REPO';
+            } else {
+                return repos[Math.floor(random - 1)].name;
+            }
+        } else {
+            return Utils.getRandomElement(repos).name;
+        }
+    }
+    
     scheduleTasks(account, times, taskFunction) {
         for (const time of times) {
-            const job = schedule.scheduleJob(time, () => taskFunction(account, time));
+            const job = schedule.scheduleJob(time, async () => {
+                try {
+                    if (taskFunction === this.tasks.makeCommit) {
+                        const octokit = this.tasks.githubManager.getOctokit(account.username);
+                        const login = account.username;
+                        const repoName = await this.chooseRepository(octokit, account);
+                        const fileName = Utils.getRandomElement(config.fileNames);
+                        const commitMessage = Utils.getRandomElement(config.commitMessages);
+                        const codeSnippet = Utils.getRandomElement(config.codeSnippets);
+                        await taskFunction(account, login, repoName, fileName, commitMessage, codeSnippet, time);
+                    } else {
+                        await taskFunction(account, time);
+                    }
+                } catch (error) {
+                    this.logger.error(`Failed to execute task for ${account.username}: ${error.message}`);
+                }
+            });
             this.scheduledJobs.push(job);
         }
     }
