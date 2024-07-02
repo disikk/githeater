@@ -137,6 +137,7 @@ source $BASH_PROFILE
 echo "Вывод логов скрипта: ${SERVICE_NAME}_logs
 Запуск/рестарт скрипта: ${SERVICE_NAME}_restart
 Остановка: ${SERVICE_NAME}_stop
+Обновление: ${SERVICE_NAME}_update
 "
 
 echo "Для конфигурации внесите изменения в файлах
