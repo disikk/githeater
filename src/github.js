@@ -4,6 +4,8 @@ const { Octokit } = require('@octokit/rest');
 const HttpsProxyAgent = require('https-proxy-agent');
 const config = require('./config');
 const Logger = require('./logger');
+const Utils = require('./utils');
+
 
 class GitHubManager {
     constructor() {
@@ -145,7 +147,7 @@ class GitHubManager {
     async getRandomPublicRepo() {
         const response = await fetch('https://api.github.com/search/repositories?q=stars:>100&sort=stars&order=desc&per_page=100');
         const data = await response.json();
-        return this.getRandomElement(data.items);
+        return Utils.getRandomElement(data.items);
     }
 }
 
