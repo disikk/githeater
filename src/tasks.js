@@ -11,6 +11,10 @@ class Tasks {
     }
 
     async makeCommit(account, login, repoName, fileName, commitMessage, codeSnippet, time) {
+        if (!account || !login || !repoName || !fileName || !commitMessage || !codeSnippet) {
+            this.logger.error(`makeCommit called with invalid arguments: ${JSON.stringify({account, login, repoName, fileName, commitMessage, codeSnippet})}`);
+            return;
+        }
         const octokit = this.githubManager.getOctokit(account.username);
         try {
             const repos = await this.githubManager.listReposWithRetry(octokit);
@@ -98,6 +102,10 @@ class Tasks {
     }
 
     async acceptPullRequest(account, time) {
+        if (!account) {
+            this.logger.error(`acceptPullRequest called with invalid account: ${JSON.stringify(account)}`);
+            return;
+        }
         const octokit = this.githubManager.getOctokit(account.username);
 
         try {
