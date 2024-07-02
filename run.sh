@@ -133,10 +133,9 @@ fi
 source $BASH_PROFILE
 
 echo "Вывод логов скрипта: ${SERVICE_NAME}_logs
-
 Запуск/рестарт скрипта: ${SERVICE_NAME}_restart
-
-Остановка: ${SERVICE_NAME}_stop"
+Остановка: ${SERVICE_NAME}_stop
+"
 
 echo "Для конфигурации внесите изменения в файлах
 ${PROJECT_DIR}/src/config.js
