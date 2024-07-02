@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Путь к вашему проекту
-REPO_URL="https://github.com/disikk/githeat"
-PROJECT_DIR="$HOME/githeat"
-SERVICE_NAME="githeat"
+REPO_URL="https://github.com/disikk/githeater"
+PROJECT_DIR="$HOME/githeater"
+SERVICE_NAME="githeater"
 SERVICE_FILE="/etc/systemd/system/${SERVICE_NAME}.service"
 
 # Функция для сравнения версий
@@ -89,7 +89,7 @@ if [ ! -f "$SERVICE_FILE" ]; then
     echo "Создание системного сервиса..."
     sudo bash -c "cat > ${SERVICE_FILE} <<EOF
 [Unit]
-Description=GitHub Committer Service
+Description=GitHub Heater Service
 After=network.target
 
 [Service]
@@ -119,28 +119,25 @@ fi
 # Создание алиасов для проверки логов и перезапуска сервиса
 BASH_PROFILE="${HOME}/.bash_profile"
 if ! grep -q "alias ${SERVICE_NAME}_logs" $BASH_PROFILE; then
-    echo "раз_1"
     echo "alias ${SERVICE_NAME}_logs='sudo journalctl -u ${SERVICE_NAME} -fn 30 -o cat'" >> $BASH_PROFILE
-    echo "раз_2"
 fi
 
 if ! grep -q "alias ${SERVICE_NAME}_restart" $BASH_PROFILE; then
-    echo "два_1"
     echo "alias ${SERVICE_NAME}_restart='sudo systemctl restart ${SERVICE_NAME} && sudo journalctl -u ${SERVICE_NAME} -fn 30 -o cat'" >> $BASH_PROFILE
-    echo "два_2"
 fi
 if ! grep -q "alias ${SERVICE_NAME}_stop" $BASH_PROFILE; then
-    echo "три_1"
     echo "alias ${SERVICE_NAME}_stop='sudo systemctl stop ${SERVICE_NAME}'" >> $BASH_PROFILE
-    echo "три_2"
 fi
 
 # Перезагрузка bash_PROFILE, чтобы алиасы стали доступны
 source $BASH_PROFILE
 
 echo "Вывод логов скрипта: ${SERVICE_NAME}_logs
+
 Запуск/рестарт скрипта: ${SERVICE_NAME}_restart
+
 Остановка: ${SERVICE_NAME}_stop"
+
 echo "Для конфигурации внесите изменения в файлах
-${PROJECT_DIR}/config.js
+${PROJECT_DIR}/src/config.js
 ${PROJECT_DIR}/data/accounts.json"
