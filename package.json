@@ -1,0 +1,21 @@
+{
+    "name": "github-activity-simulator",
+    "version": "2.0.0",
+    "description": "A script to simulate GitHub activity across multiple accounts.",
+    "main": "index.js",
+    "scripts": {
+      "start": "node index.js"
+    },
+    "dependencies": {
+      "@octokit/rest": "^19.0.10",
+      "axios": "^1.4.0",
+      "chalk": "^4.1.2",
+      "csv-writer": "^1.6.0",
+      "date-fns": "^2.30.0",
+      "https-proxy-agent": "^5.0.1",
+      "node-schedule": "^2.1.0",
+      "winston": "^3.10.0"
+    },
+    "author": "",
+    "license": "ISC"
+}
