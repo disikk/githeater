@@ -11,25 +11,32 @@ class Tasks {
     }
 
     async makeCommit(account, login, repoName, fileName, commitMessage, codeSnippet, time) {
-        if (!account || !login || !repoName || !fileName || !commitMessage || !codeSnippet) {
-            this.logger.error(`makeCommit called with invalid arguments: ${JSON.stringify({account, login, repoName, fileName, commitMessage, codeSnippet})}`);
-            return;
+        // Проверяем, не передан ли весь объект аккаунта вместо отдельных параметров
+        if (typeof login === 'object' && login !== null) {
+            // Если передан объект, извлекаем нужные данные
+            ({ username: login, token: account.token, proxy: account.proxy } = login);
+            repoName = fileName;
+            fileName = commitMessage;
+            commitMessage = codeSnippet;
+            codeSnippet = time;
+            time = new Date();
         }
+    
         const octokit = this.githubManager.getOctokit(account.username);
         try {
             const repos = await this.githubManager.listReposWithRetry(octokit);
-
+    
             if (repoName === 'NEW_REPO') {
                 repoName = await this.githubManager.createNewRepo(octokit, login, repos);
                 this.logger.info(`Account ${account.username}: Created new repo ${repoName}`);
             }
-
+    
             let fileExists = await this.githubManager.checkFileExists(octokit, login, repoName, fileName);
             while (fileExists) {
                 fileName = Utils.getRandomElement(config.fileNames);
                 fileExists = await this.githubManager.checkFileExists(octokit, login, repoName, fileName);
             }
-
+    
             await octokit.rest.repos.createOrUpdateFileContents({
                 owner: login,
                 repo: repoName,
@@ -37,7 +44,7 @@ class Tasks {
                 message: commitMessage,
                 content: Buffer.from(codeSnippet).toString('base64'),
             });
-
+    
             this.logger.info(`Account ${account.username}: Committed to ${repoName} at ${time}`);
         } catch (error) {
             this.logger.error(`Account ${account.username}: Failed to commit: ${error.message}`);
