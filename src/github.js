@@ -37,6 +37,14 @@ class GitHubManager {
         return this.octokitInstances[username];
     }
 
+    getOctokitByToken(token) {
+        const account = config.accounts.find(acc => acc.token === token);
+        if (!account) {
+            throw new Error(`Account with provided token not found`);
+        }
+        return this.octokitInstances[account.username];
+    }
+
     async getCommitCount(octokit, username) {
         let totalCommits = 0;
         try {

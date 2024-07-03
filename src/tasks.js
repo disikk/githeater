@@ -11,51 +11,39 @@ class Tasks {
     }
 
     async makeCommit(account, login, repoName, fileName, commitMessage, codeSnippet, time) {
-        // Проверяем, передан ли первый аргумент как объект (что указывает на старый формат вызова)
-        if (typeof account === 'object' && account !== null && account.username) {
-            // Если передан объект, извлекаем нужные данные
-            login = account.username;
-            // Остальные параметры сдвигаются
-            repoName = login;
-            fileName = repoName;
-            commitMessage = fileName;
-            codeSnippet = commitMessage;
-            time = codeSnippet;
-        }
-    
         // Проверяем, что все необходимые параметры определены
-        if (!account || !login || !repoName || !fileName || !commitMessage || !codeSnippet) {
+        if (!account || !account.token || !login || !repoName || !fileName || !commitMessage || !codeSnippet) {
             throw new Error(`Invalid arguments for makeCommit: ${JSON.stringify({account, login, repoName, fileName, commitMessage, codeSnippet})}`);
         }
     
-        const octokit = this.githubManager.getOctokit(account.username);
-    try {
-        const repos = await this.githubManager.listReposWithRetry(octokit);
-
-        if (repoName === 'NEW_REPO') {
-            repoName = await this.githubManager.createNewRepo(octokit, account.username, repos);
-            this.logger.info(`Account ${account.username}: Created new repo ${repoName}`);
+        const octokit = this.githubManager.getOctokitByToken(account.token);
+        try {
+            const repos = await this.githubManager.listReposWithRetry(octokit);
+    
+            if (repoName === 'NEW_REPO' || !repos.some(repo => repo.name === repoName)) {
+                repoName = await this.githubManager.createNewRepo(octokit, account.username, repos);
+                this.logger.info(`Account ${account.username}: Created new repo ${repoName}`);
+            }
+    
+            let fileExists = await this.githubManager.checkFileExists(octokit, account.username, repoName, fileName);
+            while (fileExists) {
+                fileName = Utils.getRandomElement(config.fileNames);
+                fileExists = await this.githubManager.checkFileExists(octokit, account.username, repoName, fileName);
+            }
+    
+            await octokit.rest.repos.createOrUpdateFileContents({
+                owner: account.username,
+                repo: repoName,
+                path: fileName,
+                message: commitMessage,
+                content: Buffer.from(codeSnippet).toString('base64'),
+            });
+    
+            this.logger.info(`Account ${account.username}: Committed to ${repoName} at ${time}`);
+        } catch (error) {
+            this.logger.error(`Account ${account.username}: Failed to commit: ${error.message}`);
+            throw error; // Перебрасываем ошибку, чтобы она была обработана в вызывающем коде
         }
-
-        let fileExists = await this.githubManager.checkFileExists(octokit, account.username, repoName, fileName);
-        while (fileExists) {
-            fileName = Utils.getRandomElement(config.fileNames);
-            fileExists = await this.githubManager.checkFileExists(octokit, account.username, repoName, fileName);
-        }
-
-        await octokit.rest.repos.createOrUpdateFileContents({
-            owner: account.username,
-            repo: repoName,
-            path: fileName,
-            message: commitMessage,
-            content: Buffer.from(codeSnippet).toString('base64'),
-        });
-
-        this.logger.info(`Account ${account.username}: Committed to ${repoName} at ${time}`);
-    } catch (error) {
-        this.logger.error(`Account ${account.username}: Failed to commit: ${error.message}`);
-        throw error;
-    }
     }
 
     async starOwnRepo(account, time) {
