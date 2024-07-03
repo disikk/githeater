@@ -28,12 +28,19 @@ class Tasks {
                 fileName = Utils.getRandomElement(config.fileNames);
             }
     
+            // Проверяем, что codeSnippet не undefined
+            if (typeof codeSnippet !== 'string' || codeSnippet.length === 0) {
+                throw new Error('Invalid code snippet');
+            }
+    
+            const content = Buffer.from(codeSnippet).toString('base64');
+    
             await octokit.rest.repos.createOrUpdateFileContents({
                 owner: username,
                 repo: repoName,
                 path: fileName,
                 message: commitMessage,
-                content: Buffer.from(codeSnippet).toString('base64'),
+                content: content,
             });
     
             this.logger.info(`Account ${username}: Committed to ${repoName} at ${time}`);

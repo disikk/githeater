@@ -15,8 +15,8 @@ module.exports = {
     MAX_RETRIES: 10,
     RETRY_DELAY: 10000,
     accounts: JSON.parse(fs.readFileSync(path.join(__dirname, '../data', 'accounts.json'))),
-    codeSnippets: JSON.parse(fs.readFileSync(path.join(__dirname, '../data', 'code_snippets.json'))),
     randomWords: JSON.parse(fs.readFileSync(path.join(__dirname, '../data', 'random_words.json'))),
     commitMessages: JSON.parse(fs.readFileSync(path.join(__dirname, '../data', 'commit_messages.json'))),
-    fileNames: JSON.parse(fs.readFileSync(path.join(__dirname, '../data', 'file_names.json')))
+    fileNames: JSON.parse(fs.readFileSync(path.join(__dirname, '../data', 'file_names.json'))),
+    codeSnippets: JSON.parse(fs.readFileSync(path.join(__dirname, '../data', 'code_snippets.json'))),
 };

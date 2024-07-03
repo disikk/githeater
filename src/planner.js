@@ -84,6 +84,12 @@ class Planner {
                         const fileName = Utils.getRandomElement(config.fileNames);
                         const commitMessage = Utils.getRandomElement(config.commitMessages);
                         const codeSnippet = Utils.getRandomElement(config.codeSnippets);
+                        
+                        // Проверяем, что все аргументы определены
+                        if (!login || !repoName || !fileName || !commitMessage || !codeSnippet) {
+                            throw new Error('One or more arguments for makeCommit are undefined');
+                        }
+                        
                         await taskFunction(account, login, repoName, fileName, commitMessage, codeSnippet, time);
                     } else {
                         await taskFunction(account, time);
