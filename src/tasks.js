@@ -11,38 +11,35 @@ class Tasks {
     }
 
     async makeCommit(account, login, repoName, fileName, commitMessage, codeSnippet, time) {
-        // Проверяем, что все необходимые параметры определены
-        if (!account || !account.token || !login || !repoName || !fileName || !commitMessage || !codeSnippet) {
-            throw new Error(`Invalid arguments for makeCommit: ${JSON.stringify({account, login, repoName, fileName, commitMessage, codeSnippet})}`);
+        const { username, token } = account;
+        if (!token || !username) {
+            throw new Error(`Invalid account data: ${JSON.stringify(account)}`);
         }
     
-        const octokit = this.githubManager.getOctokitByToken(account.token);
+        const octokit = this.githubManager.getOctokitByToken(token);
         try {
-            const repos = await this.githubManager.listReposWithRetry(octokit);
-    
-            if (repoName === 'NEW_REPO' || !repos.some(repo => repo.name === repoName)) {
-                repoName = await this.githubManager.createNewRepo(octokit, account.username, repos);
-                this.logger.info(`Account ${account.username}: Created new repo ${repoName}`);
+            if (repoName === 'NEW_REPO') {
+                repoName = await this.githubManager.createNewRepo(octokit, username, await this.githubManager.listReposWithRetry(octokit));
+                this.logger.info(`Account ${username}: Created new repo ${repoName}`);
             }
     
-            let fileExists = await this.githubManager.checkFileExists(octokit, account.username, repoName, fileName);
-            while (fileExists) {
+            let fileExists = await this.githubManager.checkFileExists(octokit, username, repoName, fileName);
+            if (fileExists) {
                 fileName = Utils.getRandomElement(config.fileNames);
-                fileExists = await this.githubManager.checkFileExists(octokit, account.username, repoName, fileName);
             }
     
             await octokit.rest.repos.createOrUpdateFileContents({
-                owner: account.username,
+                owner: username,
                 repo: repoName,
                 path: fileName,
                 message: commitMessage,
                 content: Buffer.from(codeSnippet).toString('base64'),
             });
     
-            this.logger.info(`Account ${account.username}: Committed to ${repoName} at ${time}`);
+            this.logger.info(`Account ${username}: Committed to ${repoName} at ${time}`);
         } catch (error) {
-            this.logger.error(`Account ${account.username}: Failed to commit: ${error.message}`);
-            throw error; // Перебрасываем ошибку, чтобы она была обработана в вызывающем коде
+            this.logger.error(`Account ${username}: Failed to commit: ${error.message}`);
+            throw error;
         }
     }
 

@@ -119,7 +119,7 @@ class GitHubManager {
         let attempts = 0;
     
         do {
-            newRepoName = this.getRandomElement(config.randomWords);
+            newRepoName = Utils.getRandomElement(config.randomWords);
             attempts++;
         } while (repos.find(r => r.name === newRepoName) && attempts < config.randomWords.length);
     

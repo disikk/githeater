@@ -77,7 +77,7 @@ class Planner {
         for (const time of times) {
             const job = schedule.scheduleJob(time, async () => {
                 try {
-                    if (taskFunction === this.tasks.makeCommit) {
+                    if (taskFunction === this.tasks.makeCommit.bind(this.tasks)) {
                         const octokit = this.tasks.githubManager.getOctokit(account.username);
                         const login = account.username;
                         const repoName = await this.chooseRepository(octokit, account);
@@ -90,7 +90,6 @@ class Planner {
                     }
                 } catch (error) {
                     this.logger.error(`Failed to execute task for ${account.username}: ${error.message}`);
-                    // Здесь можно добавить дополнительную обработку ошибок, если необходимо
                 }
             });
             this.scheduledJobs.push(job);
