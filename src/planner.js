@@ -89,7 +89,8 @@ class Planner {
                         await taskFunction(account, time);
                     }
                 } catch (error) {
-                    console.error(`Failed to execute task for ${account.username}: ${error.message}`);
+                    this.logger.error(`Failed to execute task for ${account.username}: ${error.message}`);
+                    // Здесь можно добавить дополнительную обработку ошибок, если необходимо
                 }
             });
             this.scheduledJobs.push(job);

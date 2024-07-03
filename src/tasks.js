@@ -11,24 +11,30 @@ class Tasks {
     }
 
     async makeCommit(account, login, repoName, fileName, commitMessage, codeSnippet, time) {
-        // Проверяем, не передан ли весь объект аккаунта вместо отдельных параметров
-        if (typeof login === 'object' && login !== null) {
+        // Проверяем, передан ли первый аргумент как объект (что указывает на старый формат вызова)
+        if (typeof account === 'object' && account !== null && account.username) {
             // Если передан объект, извлекаем нужные данные
-            ({ username: login, token: account.token, proxy: account.proxy } = login);
-            repoName = fileName;
-            fileName = commitMessage;
-            commitMessage = codeSnippet;
-            codeSnippet = time;
-            time = new Date();
+            login = account.username;
+            // Остальные параметры сдвигаются
+            repoName = login;
+            fileName = repoName;
+            commitMessage = fileName;
+            codeSnippet = commitMessage;
+            time = codeSnippet;
         }
     
-        const octokit = this.githubManager.getOctokit(account.username);
+        // Проверяем, что все необходимые параметры определены
+        if (!account || !login || !repoName || !fileName || !commitMessage || !codeSnippet) {
+            throw new Error(`Invalid arguments for makeCommit: ${JSON.stringify({account, login, repoName, fileName, commitMessage, codeSnippet})}`);
+        }
+    
+        const octokit = this.githubManager.getOctokit(login);
         try {
             const repos = await this.githubManager.listReposWithRetry(octokit);
     
             if (repoName === 'NEW_REPO') {
                 repoName = await this.githubManager.createNewRepo(octokit, login, repos);
-                this.logger.info(`Account ${account.username}: Created new repo ${repoName}`);
+                this.logger.info(`Account ${login}: Created new repo ${repoName}`);
             }
     
             let fileExists = await this.githubManager.checkFileExists(octokit, login, repoName, fileName);
@@ -45,9 +51,10 @@ class Tasks {
                 content: Buffer.from(codeSnippet).toString('base64'),
             });
     
-            this.logger.info(`Account ${account.username}: Committed to ${repoName} at ${time}`);
+            this.logger.info(`Account ${login}: Committed to ${repoName} at ${time}`);
         } catch (error) {
-            this.logger.error(`Account ${account.username}: Failed to commit: ${error.message}`);
+            this.logger.error(`Account ${login}: Failed to commit: ${error.message}`);
+            throw error; // Перебрасываем ошибку, чтобы она была обработана в вызывающем коде
         }
     }
 
