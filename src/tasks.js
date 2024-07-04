@@ -29,7 +29,7 @@ class Tasks {
             }
     
             // Проверяем, что codeSnippet не undefined
-            if (typeof codeSnippet !== 'string' || codeSnippet.length === 0) {
+            if (typeof codeSnippet !== 'string' || codeSnippet.trim() === '') {
                 throw new Error('Invalid code snippet');
             }
     
