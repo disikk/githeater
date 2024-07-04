@@ -12,6 +12,10 @@ function loadJsonFile(filename) {
     }
 }
 
+function validateCodeSnippets(snippets) {
+    return snippets.filter(snippet => typeof snippet !== 'string' || snippet.trim() === '');
+}
+
 const accounts = loadJsonFile('accounts.json');
 const codeSnippets = loadJsonFile('code_snippets.json');
 console.log('Loaded code snippets:', codeSnippets.length); 
@@ -24,6 +28,14 @@ if (!Array.isArray(codeSnippets) || codeSnippets.length === 0) {
     console.error('codeSnippets must be a non-empty array');
     process.exit(1);
 }
+
+const invalidSnippets = validateCodeSnippets(codeSnippets);
+if (invalidSnippets.length > 0) {
+    console.error('Invalid code snippets found:', invalidSnippets);
+    process.exit(1);
+}
+
+console.log('All code snippets are valid.');
 
 module.exports = {
     TOTAL_DAYS: 1,
