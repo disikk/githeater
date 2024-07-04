@@ -88,6 +88,8 @@ class Planner {
                     
                         // Добавляем отладочное логирование
                         this.logger.info(`Scheduling commit for ${login}. Code snippet length: ${codeSnippet.length}`);
+                        this.logger.warn(`Chosen snippet: 
+                            ${codeSnippet}`);
                         
                         // Проверяем, что все аргументы определены
                         if (!login || !repoName || !fileName || !commitMessage || !codeSnippet) {
