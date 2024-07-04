@@ -14,6 +14,7 @@ function loadJsonFile(filename) {
 
 const accounts = loadJsonFile('accounts.json');
 const codeSnippets = loadJsonFile('code_snippets.json');
+console.log('Loaded code snippets:', codeSnippets.length); 
 const commitMessages = loadJsonFile('commit_messages.json');
 const fileNames = loadJsonFile('file_names.json');
 const randomWords = loadJsonFile('random_words.json');

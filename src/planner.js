@@ -83,7 +83,11 @@ class Planner {
                         const repoName = await this.chooseRepository(octokit, account);
                         const fileName = Utils.getRandomElement(config.fileNames);
                         const commitMessage = Utils.getRandomElement(config.commitMessages);
-                        const codeSnippet = Utils.getRandomElement(config.codeSnippets);
+                        let codeSnippet = Utils.getRandomElement(config.codeSnippets);
+                        codeSnippet = codeSnippet.replace(/\\n/g, '\n');
+                    
+                        // Добавляем отладочное логирование
+                        this.logger.info(`Scheduling commit for ${login}. Code snippet length: ${codeSnippet.length}`);
                         
                         // Проверяем, что все аргументы определены
                         if (!login || !repoName || !fileName || !commitMessage || !codeSnippet) {
