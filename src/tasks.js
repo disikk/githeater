@@ -142,8 +142,11 @@ class Tasks {
                     this.logger.info(`Account ${account.username}: Accepted pull request #${randomPR.number} in ${repo.name} at ${time}`);
                     return;
                 }
+                else {
+                    this.logger.warn(`Account ${account.username}: No open pull requests found`);
+                }
             }
-            this.logger.warn(`Account ${account.username}: No open pull requests found`);
+            
         } catch (error) {
             this.logger.error(`Account ${account.username}: Failed to accept pull request: ${error.message}`);
         }
