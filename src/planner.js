@@ -56,6 +56,7 @@ class Planner {
 
     async chooseRepository(octokit, account) {
         const repos = await this.tasks.githubManager.listReposWithRetry(octokit);
+        //this.logger.info(`Available repos for ${account.username}: ${repos.map(r => r.name).join(', ')}`);
         const repoCount = repos.length;
         const threshold = config.REPOS_THRESHOLD;
     
@@ -74,29 +75,24 @@ class Planner {
     }
     
     scheduleTasks(account, times, taskFunction) {
-        for (const time of times) {
-            const job = schedule.scheduleJob(time, async () => {
+        for (const time of times) {           
+           const job = schedule.scheduleJob(time, async () => {
                 try {
-                    if (taskFunction === this.tasks.makeCommit.bind(this.tasks)) {
-                        const octokit = this.tasks.githubManager.getOctokit(account.username);
-                        const login = account.username;
+                    
+                    if (taskFunction.name === 'bound makeCommit') {
+                        
                         const repoName = await this.chooseRepository(octokit, account);
                         const fileName = Utils.getRandomElement(config.fileNames);
                         const commitMessage = Utils.getRandomElement(config.commitMessages);
                         let codeSnippet = Utils.getRandomElement(config.codeSnippets);
                         codeSnippet = codeSnippet.replace(/\\n/g, '\n');
-                    
-                        // Добавляем отладочное логирование
-                        this.logger.info(`Scheduling commit for ${login}. Code snippet length: ${codeSnippet.length}`);
-                        this.logger.warn(`Chosen snippet: 
-                            ${codeSnippet}`);
-                        
+
                         // Проверяем, что все аргументы определены
                         if (!login || !repoName || !fileName || !commitMessage || !codeSnippet) {
                             throw new Error('One or more arguments for makeCommit are undefined');
                         }
                         
-                        await taskFunction(account, login, repoName, fileName, commitMessage, codeSnippet, time);
+                        await taskFunction(account, repoName, fileName, commitMessage, codeSnippet, time);
                     } else {
                         await taskFunction(account, time);
                     }
@@ -104,7 +100,9 @@ class Planner {
                     this.logger.error(`Failed to execute task for ${account.username}: ${error.message}`);
                 }
             });
+            
             this.scheduledJobs.push(job);
+            
         }
     }
 

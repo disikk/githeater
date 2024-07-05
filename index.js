@@ -22,7 +22,7 @@ async function logAccountInfo(githubManager) {
 async function main() {
     try {
         const githubManager = new GitHubManager();
-        await logAccountInfo(githubManager);
+        //await logAccountInfo(githubManager);
         const tasks = new Tasks(githubManager);
         const planner = new Planner(tasks);
 

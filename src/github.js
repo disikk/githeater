@@ -103,11 +103,13 @@ class GitHubManager {
         for (let attempt = 1; attempt <= retries; attempt++) {
             try {
                 const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser();
+                //this.logger.info(`Successfully listed ${repos.length} repositories`);
                 return repos;
             } catch (error) {
                 if (attempt === retries) {
                     throw error;
                 }
+                attempt++
                 this.logger.warn(`Failed to list repositories (attempt ${attempt}): ${error.message}`);
                 await new Promise(resolve => setTimeout(resolve, config.RETRY_DELAY));
             }
@@ -147,6 +149,7 @@ class GitHubManager {
             if (error.status === 404) {
                 return false;
             } else {
+                this.logger.info(`checkFileExists: ${error}`);
                 throw error;
             }
         }
