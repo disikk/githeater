@@ -96,7 +96,7 @@ class Tasks {
 
         try {
             const repos = await octokit.rest.repos.listForUser({ username: targetAccount.realUsername });
-            if(targetRepos.length > 0) {
+            if(repos.length > 0) {
                 const targetRepo = Utils.getRandomElement(repos.data);
                 const pullRequest = await octokit.rest.pulls.create({
                     owner: targetAccount.realUsername,
