@@ -66,19 +66,22 @@ if [ ! -f "$ACCOUNTS_FILE" ]; then
     cat <<EOF > $ACCOUNTS_FILE
 [
     {
-        "username": "example1",
+        "username": "any_alias_1",
         "token": "ghp_exampletoken1",
-        "proxy": "http://username:password@proxyaddress:port"
+        "proxy": "http://username:password@proxyaddress:port",
+        "realUsername": "acc_handle1"
     },
     {
-        "username": "example2",
+        "username": "any_alias_2",
         "token": "ghp_exampletoken2",
-        "proxy": "http://username:password@proxyaddress:port"
+        "proxy": "http://username:password@proxyaddress:port",
+        "realUsername": "acc_handle2"
     },
     {
-        "username": "example3",
+        "username": "any_alias_3",
         "token": "ghp_exampletoken3",
-        "proxy": "http://username:password@proxyaddress:port"
+        "proxy": "http://username:password@proxyaddress:port",
+        "realUsername": "acc_handle3"
     }
 ]
 EOF
