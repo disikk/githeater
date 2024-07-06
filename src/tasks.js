@@ -145,7 +145,7 @@ class Tasks {
                 }
             }
             if (!opened_found) {
-                this.logger.warn(`Account ${account.username}: No opened pull requests found on account: ${account.username}`);
+                this.logger.warn(`Account ${account.username}: No opened pull requests found on account`);
             }
             
         } catch (error) {
