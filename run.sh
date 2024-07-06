@@ -99,7 +99,7 @@ After=network.target
 WorkingDirectory=${PROJECT_DIR}
 ExecStart=$(which npm) start
 Restart=always
-RestartSec=10
+RestartSec=3
 User=$(whoami)
 Environment=PATH=/usr/bin:/usr/local/bin
 Environment=NODE_ENV=production
