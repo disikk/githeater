@@ -125,6 +125,7 @@ class Tasks {
 
         try {
             const { data: repos } = await octokit.rest.repos.listForAuthenticatedUser();
+            let opened_found = false;
             for (const repo of repos) {
                 const { data: pullRequests } = await octokit.rest.pulls.list({
                     owner: account.realUsername,
@@ -142,9 +143,9 @@ class Tasks {
                     this.logger.info(`Account ${account.username}: Accepted pull request #${randomPR.number} in ${repo.name} at ${time}`);
                     return;
                 }
-                else {
-                    this.logger.warn(`Account ${account.username}: No open pull requests found`);
-                }
+            }
+            if (!opened_found) {
+                this.logger.warn(`Account ${account.username}: No opened pull requests found on account: ${account.username}`);
             }
             
         } catch (error) {
