@@ -80,7 +80,7 @@ class Planner {
                 try {
                     
                     if (taskFunction.name === 'bound makeCommit') {
-                        
+                        const octokit = this.tasks.githubManager.getOctokit(account.username);
                         const repoName = await this.chooseRepository(octokit, account);
                         const fileName = Utils.getRandomElement(config.fileNames);
                         const commitMessage = Utils.getRandomElement(config.commitMessages);
