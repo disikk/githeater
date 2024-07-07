@@ -154,6 +154,18 @@ class GitHubManager {
             }
         }
     }
+
+    async repoExists(octokit, owner, repo) {
+        try {
+            await octokit.rest.repos.get({ owner, repo });
+            return true;
+        } catch (error) {
+            if (error.status === 404) {
+                return false;
+            }
+            throw error;
+        }
+    }
     
     async getRandomPublicRepo() {
         const response = await fetch('https://api.github.com/search/repositories?q=stars:>100&sort=stars&order=desc&per_page=100');

@@ -55,22 +55,30 @@ class Tasks {
 
     async starOwnRepo(account, time) {
         const octokit = this.githubManager.getOctokit(account.username);
-        try {
-            const targetAccount = Utils.getRandomElement(config.accounts.filter(acc => acc.username !== account.username));
-            const targetRepos = await octokit.rest.repos.listForUser({ username: targetAccount.realUsername });
-            if (targetRepos.length > 0) {
-                const targetRepo = Utils.getRandomElement(targetRepos.data);
-                await octokit.rest.activity.starRepoForAuthenticatedUser({
-                    owner: targetAccount.realUsername,
-                    repo: targetRepo.name
-                });
-                this.logger.info(`Account ${account.username}: Starred own repo ${targetRepo.name} at ${time}`);
-            } else {
-                this.logger.warn(`Account ${account.username}: No repositories to star`);
+        const availableAccounts = config.accounts.filter(acc => acc.username !== account.username);
+        
+        while (availableAccounts.length > 0) {
+            const targetAccount = Utils.getRandomElement(availableAccounts);
+            try {
+                const targetRepos = await octokit.rest.repos.listForUser({ username: targetAccount.realUsername });
+                if (targetRepos.data.length > 0) {
+                    const targetRepo = Utils.getRandomElement(targetRepos.data);
+                    await octokit.rest.activity.starRepoForAuthenticatedUser({
+                        owner: targetAccount.realUsername,
+                        repo: targetRepo.name
+                    });
+                    this.logger.info(`Account ${account.username}: Starred repo ${targetAccount.username}/${targetRepo.name} at ${time}`);
+                    return;
+                } else {
+                    this.logger.warn(`Account ${account.username}: No repositories found for ${targetAccount.username}`);
+                    availableAccounts.splice(availableAccounts.indexOf(targetAccount), 1);
+                }
+            } catch (error) {
+                this.logger.error(`Account ${account.username}: Failed to star repo: ${error.message}`);
+                availableAccounts.splice(availableAccounts.indexOf(targetAccount), 1);
             }
-        } catch (error) {
-            this.logger.error(`Account ${account.username}: Failed to star own repo: ${error.message}`);
         }
+        this.logger.warn(`Account ${account.username}: No repositories to star on any account`);
     }
 
     async starRandomRepo(account, time) {
@@ -91,28 +99,119 @@ class Tasks {
         const octokit = this.githubManager.getOctokit(account.username);
         const commitMessage = Utils.getRandomElement(config.commitMessages);
         const codeSnippet = Utils.getRandomElement(config.codeSnippets);
-
-        const targetAccount = Utils.getRandomElement(config.accounts.filter(acc => acc.username !== account.username));
-
-        try {
-            const repos = await octokit.rest.repos.listForUser({ username: targetAccount.realUsername });
-            if(repos.length > 0) {
-                const targetRepo = Utils.getRandomElement(repos.data);
-                const pullRequest = await octokit.rest.pulls.create({
-                    owner: targetAccount.realUsername,
-                    repo: targetRepo.name,
-                    head: `${account.username}:main`,
-                    base: 'main',
-                    title: commitMessage,
-                    body: codeSnippet
+    
+        const otherAccounts = config.accounts.filter(acc => acc.username !== account.username);
+        let pullRequestCreated = false;
+    
+        while (!pullRequestCreated && otherAccounts.length > 0) {
+            const targetAccount = Utils.getRandomElement(otherAccounts);
+            otherAccounts.splice(otherAccounts.indexOf(targetAccount), 1);
+    
+            try {
+                const { data: repos } = await octokit.rest.repos.listForUser({ 
+                    username: targetAccount.realUsername, 
+                    type: 'all' 
                 });
-                this.logger.info(`Account ${account.username}: Created pull request #${pullRequest.data.number} to ${targetAccount.username}/${targetRepo.name} at ${time}`);
-            } else {
-                this.logger.warn(`Account ${account.username}: No repositories to create pull request`);
+    
+                const eligibleRepos = repos.filter(repo => !repo.fork && !repo.archived);
+                //this.logger.info(`Account ${account.username}: Found ${eligibleRepos.length} eligible repos for ${targetAccount.realUsername}`);
+    
+                // Перемешиваем массив репозиториев
+                const shuffledRepos = Utils.shuffleArray(eligibleRepos);
+    
+                for (const targetRepo of shuffledRepos) {
+                    try {
+                        // Проверяем, существует ли репозиторий
+                        const repoExists = await this.githubManager.repoExists(octokit, targetAccount.realUsername, targetRepo.name);
+                        if (!repoExists) {
+                            this.logger.info(`Repository ${targetRepo.name} does not exist. Skipping.`);
+                        continue;
+                        }
+
+                        // Проверяем, не пустой ли репозиторий
+                        let isEmpty = true;
+                        try {
+                            const { data: commits } = await octokit.rest.repos.listCommits({
+                                owner: targetAccount.realUsername,
+                                repo: targetRepo.name,
+                                per_page: 1
+                            });
+                            isEmpty = commits.length === 0;
+                        } catch (error) {
+                            if (error.status === 409) {
+                                // Репозиторий пуст (GitHub API возвращает 409 для пустых репозиториев)
+                                isEmpty = true;
+                            } else {
+                                throw error;
+                            }
+                        }
+
+                        if (isEmpty) {
+                            //this.logger.info(`Repository ${targetRepo.name} is empty. Skipping.`);
+                            continue;
+                        }
+                        
+    
+                        const { data: fork } = await octokit.rest.repos.createFork({
+                            owner: targetAccount.realUsername,
+                            repo: targetRepo.name
+                        });
+    
+                        await new Promise(resolve => setTimeout(resolve, 10000));
+    
+                        const { data: ref } = await octokit.rest.git.getRef({
+                            owner: targetAccount.realUsername,
+                            repo: targetRepo.name,
+                            ref: `heads/${targetRepo.default_branch}`,
+                        });
+    
+                        const branchName = `pr-${Date.now()}`;
+                        await octokit.rest.git.createRef({
+                            owner: account.realUsername,
+                            repo: fork.name,
+                            ref: `refs/heads/${branchName}`,
+                            sha: ref.object.sha
+                        });
+    
+                        await octokit.rest.repos.createOrUpdateFileContents({
+                            owner: account.realUsername,
+                            repo: fork.name,
+                            path: `file-${Date.now()}.txt`,
+                            message: commitMessage,
+                            content: Buffer.from(codeSnippet).toString('base64'),
+                            branch: branchName
+                        });
+    
+                        const pullRequest = await octokit.rest.pulls.create({
+                            owner: targetAccount.realUsername,
+                            repo: targetRepo.name,
+                            title: commitMessage,
+                            head: `${account.realUsername}:${branchName}`,
+                            base: targetRepo.default_branch,
+                            body: codeSnippet
+                        });
+    
+                        this.logger.info(`Account ${account.username}: Created pull request #${pullRequest.data.number} to ${targetAccount.username}/${targetRepo.name} at ${time}`);
+                        pullRequestCreated = true;
+                        break;
+                    } catch (repoError) {
+                        this.logger.warn(`Account ${account.username}: Failed to create pull request for repo ${targetRepo.name}: ${repoError.message}`);
+                        if (repoError.status) {
+                            this.logger.warn(`HTTP Status: ${repoError.status}`);
+                        }
+                        if (repoError.response) {
+                            this.logger.warn(`Response: ${JSON.stringify(repoError.response.data)}`);
+                        }
+                    }
+                }
+                
+                if (pullRequestCreated) break;
+            } catch (error) {
+                this.logger.error(`Account ${account.username}: Failed to process account ${targetAccount.username}: ${error.message}`);
             }
-            
-        } catch (error) {
-            this.logger.error(`Account ${account.username}: Failed to create pull request to ${targetAccount.username}/${targetRepo.name}: ${error.message}`);
+        } 
+        if (!pullRequestCreated) {
+            this.logger.warn(`Account ${account.username}: Failed to create pull request for any repository`);
         }
     }
 
