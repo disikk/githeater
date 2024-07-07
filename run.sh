@@ -135,6 +135,7 @@ if ! grep -q "alias ${SERVICE_NAME}_update" $BASH_PROFILE; then
     echo "alias ${SERVICE_NAME}_update='cd ${PROJECT_DIR} && git pull && npm install'" >> $BASH_PROFILE
 fi
 # Перезагрузка bash_PROFILE, чтобы алиасы стали доступны
+cd $HOME
 source $BASH_PROFILE
 
 echo "Вывод логов скрипта: ${SERVICE_NAME}_logs
